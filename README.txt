@@ -1,0 +1,2 @@
+Lockless SPSC Queue inspired by Charles Frasch's CppCon 2023 Talk
+Link: https://www.youtube.com/watch?v=K3P_Lmq6pw0
