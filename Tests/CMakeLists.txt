@@ -12,5 +12,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fsanitize=thread")
+
 add_executable(${PROJECT_NAME} CircularBuffer_UnitTest.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE CircularSPSCQueue gtest_main)

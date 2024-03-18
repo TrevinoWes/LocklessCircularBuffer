@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <atomic>
 
 template <class T>
 class CircularSPSCQueue {
@@ -20,8 +21,8 @@ private:
 	}
 protected:
 	// Protected to allow instant overflow testing
-	uint32_t pshIdx;
-	uint32_t popIdx;
+	std::atomic<uint32_t> pshIdx;
+	std::atomic<uint32_t> popIdx;
 
 public:
 
@@ -32,9 +33,8 @@ public:
 		if (full()) {
 			return false;
 		}
-		uint32_t idx = pshIdx % capacity;
-		buffer[idx] = val;
-		++pshIdx;
+		buffer[pshIdx % capacity] = val;
+		pshIdx.fetch_add(1);
 		return true;
 	};
 
@@ -43,9 +43,8 @@ public:
 			return false;
 		}
 
-		uint32_t idx = popIdx % capacity;
-		val = buffer[idx];
-		++popIdx;
+		val = buffer[popIdx % capacity];
+		popIdx.fetch_add(1);
 		return true;
 	};
 };

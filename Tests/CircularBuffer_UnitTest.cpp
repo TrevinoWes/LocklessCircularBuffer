@@ -1,4 +1,6 @@
 #include <string>
+#include <thread>
+#include <chrono>
 #include "gtest/gtest.h"
 #include "CircularSPSCQueue.h"
 
@@ -64,14 +66,6 @@ namespace {
 	TEST(CBTest, Wrapping) {
 		ExtendedCircularSPSCQueue<uint32_t> buffer(2);
 		uint32_t retVal;
-
-/*
-		for (uint32_t i = 0; i < UINT32_MAX; ++i) {
-			EXPECT_TRUE(buffer.push(i));
-			EXPECT_TRUE(buffer.pop(retVal));
-			EXPECT_EQ(i, retVal);
-		}
-*/
 		// Force overflow testing
 		buffer.setPushIndex(UINT32_MAX - 1);
 		buffer.setPopIndex(UINT32_MAX - 1);
@@ -85,5 +79,33 @@ namespace {
 		EXPECT_TRUE(buffer.pop(retVal));
 		EXPECT_EQ(second, retVal);
 		EXPECT_FALSE(buffer.pop(retVal));
+	}
+
+	TEST(CBTest, MulitThreaded) {
+		CircularSPSCQueue<uint32_t> buffer(50);
+		uint32_t start = 5, test_count = TEST_CASE_COUNT, val;
+		
+		std::thread pushThread([&buffer, &test_count, &start](){
+			for(uint32_t i = start; i < test_count; ++i) {
+				if(!buffer.push(i)) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+					EXPECT_TRUE(buffer.push(i));
+				}
+			}
+		});
+		
+		std::thread popThread([&buffer, &test_count, &start, &val](){
+			for(uint32_t i = start; i < test_count; ++i) {
+				if(!buffer.pop(val)) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+					EXPECT_TRUE(buffer.pop(val));
+				}
+				EXPECT_EQ(val, i);
+			}
+		});
+
+		pushThread.join();
+		popThread.join();
+		EXPECT_FALSE(buffer.pop(val));
 	}
 }
