@@ -365,3 +365,5 @@ FodyWeavers.xsd
 #Custom ignored files
 .vscode
 build
+*.swp
+*.log

@@ -1,0 +1,39 @@
+{
+  "servers":
+    {
+      "read":
+        {
+          "ip": "localhost",
+          "sock_type": "SOCK_DGRAM",
+          "port": 8084,
+          "family": "AF_INET"
+        }
+      ,
+      "write": 
+        {
+          "ip": "localhost",
+          "sock_type": "SOCK_DGRAM",
+          "port": 8085,
+          "family": "AF_INET"
+        }
+    }
+  ,
+  "clients":
+    {
+      "write":
+        {
+          "ip": "localhost",
+          "sock_type": "SOCK_DGRAM",
+          "port": 8084,
+          "family": "AF_INET"
+        }
+      ,
+      "read":
+        {
+          "ip": "localhost",
+          "sock_type": "SOCK_DGRAM",
+          "port": 8085,
+          "family": "AF_INET"
+        }
+    }
+}
