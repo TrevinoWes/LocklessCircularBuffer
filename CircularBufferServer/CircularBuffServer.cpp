@@ -4,8 +4,8 @@
 #include <csignal>
 #include <memory>
 #include <atomic>
+#include <cstring>
 #include <string>
-
 #include <unistd.h>
 
 #include "Logger.h"
@@ -13,26 +13,20 @@
 #include "SocketFactory.h"
 #include "CircularSPSCQueue.h"
 
-/*
-* create companion program
-* write to socket and read from consumer socket to verify
-*/
+std::atomic<bool> run{true};
 
-std::atomic<bool> stop{false};
-//using EntityType = SocketFactory::EntityType;
-
-std::shared_ptr<Logger> logger_(Logger::getLogger());
+std::shared_ptr<Logger> logger_(Logger::getLogger("ServerLogs.log"));
 
 void sigHandler(int signal) {
-	logger_->info_log("SIGINT received, setting stop");
-	stop = true;
+	logger_->info_log("SIGINT received, stopping... ");
+	run = false;
 }
 
 int main(int argc, char* argv[]) {
 
 	std::signal(SIGINT, sigHandler);
 
-	CircularSPSCQueue<uint64_t> lcBuffer(10);
+	CircularSPSCQueue<USED_TYPE> lcBuffer(10);
 
 	//Pusher Thread
 	/*
@@ -40,35 +34,25 @@ int main(int argc, char* argv[]) {
 	* push element into circular buffer
 	*/
 	std::thread producerThread([&lcBuffer]() {
-		SocketFactory sockFactory(EntityType::Server, std::string("read"));
+		Network::SocketFactory sockFactory(Network::EntityType::Server, std::string("read"));
 		int sockfd = sockFactory.createSocket();
 		if (sockfd < 0) {
 			logger_->error_log("Producer socket creation failed");
-			stop = true;
+			run = false;
 			return;
 		}
 
-/*
-		if (!sockFactory.acceptConnection(sockfd)) {
-			sockFactory.closeSocket(sockfd);
-			logger_->error_log("Producer accept failed");
-			stop = true;
-			return;
-		}
-*/
-		unsigned char buffer[sizeof(uint64_t)]; // !!! make type dynamic
-		// !!! not an atomic operation because of ! (not)
-		// Used for consumer thread also
+		USED_TYPE val = 0;
+		int ret = 0;
 		int flags = MSG_DONTWAIT;
-		while (!stop) {
-			auto ret = ::recv(sockfd, &buffer, sizeof(buffer), flags);
-			if (ret < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+		while (run) {
+			
+			ret = sockFactory.readVal(sockfd, val, flags);
+			if (ret == 0) {
 				continue;
 			} else if (ret < 0) {
-				logger_->error_log("Push read failed (" + std::to_string(errno) + ")");
-				stop = true;
+				run = false;
 			}
-			auto val = reinterpret_cast<uint64_t>(buffer); // !!! make type dynamic
 			lcBuffer.push(val);
 		}
 
@@ -82,39 +66,28 @@ int main(int argc, char* argv[]) {
 	*/
 
 	std::thread consumerThread([&lcBuffer]() {
-		SocketFactory sockFactory(EntityType::Server, std::string("write"));
+		Network::SocketFactory sockFactory(Network::EntityType::Server, std::string("write"));
 		int sockfd = sockFactory.createSocket();
 		if (sockfd < 0) {
 			logger_->error_log("Consumer socket creation failed");
-			stop = true;
+			run = false;
 			return;
 		}
-/*
-		if (!sockFactory.acceptConnection(sockfd)) {
-			logger_->error_log("Consumer accept failed");
-			sockFactory.closeSocket(sockfd);
-			stop = true;
-			return;
-		}
-*/
 
-		uint64_t val; // !!! make this type dynamic
-		while (!stop) {
+		USED_TYPE val;
+		while (run) {
 			if (!lcBuffer.pop(val)) {
 				continue;
 			}
-			int flags = 0; // same as write, check options !!!
-			if (::send(sockfd, std::addressof(val), sizeof(val), flags) < 0) {
-				logger_->error_log("consumer write failed");
-				stop = true;
-				return;
+
+			if (sockFactory.sendVal(sockfd, val) < 0) {
+				run = false;
 			}
 		}
 
 		sockFactory.closeSocket(sockfd);
 	});
 
-	// !!! check if an error occured for threads?
 	consumerThread.join();
 	producerThread.join();
 	logger_->info_log("Server stopped, exiting...");

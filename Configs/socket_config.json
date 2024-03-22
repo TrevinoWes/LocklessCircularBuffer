@@ -3,17 +3,19 @@
     {
       "read":
         {
-          "ip": "localhost",
+          "ip": "127.0.0.1",
           "sock_type": "SOCK_DGRAM",
-          "port": 8084,
+          "server_port": 8084,
+          "client_port": 8086,
           "family": "AF_INET"
         }
       ,
       "write": 
         {
-          "ip": "localhost",
+          "ip": "127.0.0.1",
           "sock_type": "SOCK_DGRAM",
-          "port": 8085,
+          "server_port": 8085,
+          "client_port": 8087,
           "family": "AF_INET"
         }
     }
@@ -22,17 +24,19 @@
     {
       "write":
         {
-          "ip": "localhost",
+          "ip": "127.0.0.1",
           "sock_type": "SOCK_DGRAM",
-          "port": 8084,
+          "server_port": 8084,
+          "client_port": 8086,
           "family": "AF_INET"
         }
       ,
       "read":
         {
-          "ip": "localhost",
+          "ip": "127.0.0.1",
           "sock_type": "SOCK_DGRAM",
-          "port": 8085,
+          "server_port": 8085,
+          "client_port": 8087,
           "family": "AF_INET"
         }
     }

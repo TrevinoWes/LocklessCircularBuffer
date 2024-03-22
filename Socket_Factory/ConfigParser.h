@@ -8,6 +8,9 @@
 #include "SharedTypes.h"
 #include "Logger.h"
 
+
+namespace Network {
+
 namespace fsys = std::filesystem;
 
 class ConfigParser {
@@ -22,5 +25,7 @@ public:
 	static const std::map<std::string, int> SockTypeMap;
 
 	ConfigParser(EntityType& type, std::string& name) : entType_(type), name_(name), logger_(Logger::getLogger()) {};
-	bool getConfigs(struct sockaddr_in& server_addr, int& socketType);
+	bool getConfigs(NetworkSettings& netSet);
 };
+
+} //Network

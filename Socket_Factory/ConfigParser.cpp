@@ -1,11 +1,9 @@
 #include "ConfigParser.h"
 #include <fstream>
-#include <cstring> // used for memset
 #include <nlohmann/json.hpp>
 #include <arpa/inet.h>
 
-// !!! remove
-#include <iostream>
+namespace Network {
 
 using json = nlohmann::json;
 															
@@ -19,7 +17,7 @@ const std::map<std::string, int> ConfigParser::SockTypeMap = { {"SOCK_DGRAM", SO
 															   {"SOCK_SEQPACKET", SOCK_SEQPACKET},
 															   {"SOCK_STREAM", SOCK_STREAM} };
 
-bool ConfigParser::getConfigs(struct sockaddr_in& server_addr, int& socketType) {
+bool ConfigParser::getConfigs(NetworkSettings& netSet) {
 	if (!fsys::exists(CONFIG_PATH_)) {
 		logger_->error_log(name_ + "Config: file doesn't exist");
 		return false;
@@ -43,7 +41,7 @@ bool ConfigParser::getConfigs(struct sockaddr_in& server_addr, int& socketType) 
 
 	logger_->info_log(name_ + "Config: " + config.dump());
 	
-	auto familyIter = FamilyOptionMap.find(config["family"]); // !!! create enum for config options
+	auto familyIter = FamilyOptionMap.find(config["family"]);
 	auto sockTypeIter = SockTypeMap.find(config["sock_type"]);
 	if(familyIter == FamilyOptionMap.end() || sockTypeIter == SockTypeMap.end()) {
 		logger_->error_log(name_ + "Config: can't find socket family or type");
@@ -56,14 +54,19 @@ bool ConfigParser::getConfigs(struct sockaddr_in& server_addr, int& socketType) 
 	}
 	logger_->info_log(name_ + "Config: Family: " + std::to_string(familyIter->second));
 	logger_->info_log(name_ + "Config: IP: " + config["ip"].dump());
-	logger_->info_log(name_ + "Config: Port: " + config["port"].dump());
+	logger_->info_log(name_ + "Config: Server Port: " + config["server_port"].dump());
+	logger_->info_log(name_ + "Config: Client Port: " + config["client_port"].dump());
 	logger_->info_log(name_ + "Config: SockType: " + std::to_string(sockTypeIter->second));
 
-	memset(&server_addr, 0, sizeof(server_addr));
-	server_addr.sin_family = familyIter->second;
-	server_addr.sin_addr.s_addr = inet_addr(config["ip"].dump().c_str()); // inet_addr(argv[1]);
-	server_addr.sin_port = htons(config["port"]);
-	socketType = sockTypeIter->second;
+	netSet.server_addr = {};
+	netSet.server_addr.sin_family = familyIter->second;
+	inet_pton(familyIter->second, config["ip"].dump().c_str(), &netSet.server_addr.sin_addr);
+	netSet.server_port = htons(config["server_port"]);
+	netSet.server_addr.sin_port = netSet.server_port;
+	netSet.client_port = htons(config["client_port"]);
+	netSet.sockType = sockTypeIter->second;
 
 	return true;
 };
+
+} //Network
