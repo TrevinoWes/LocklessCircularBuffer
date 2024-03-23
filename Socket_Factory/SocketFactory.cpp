@@ -73,6 +73,12 @@ int SocketFactory::createSocket() {
 		return -1;
 	}
 
+	// TODO: Remove when other configurations are supported
+	if(netSet.sockType != ConfigParser::SockTypeMap.at("SOCK_DGRAM") && 
+	   netSet.server_addr.sin_family != ConfigParser::FamilyOptionMap.at("AF_INET")) {
+		return -1;
+	}
+
 
 	if (entType_ == EntityType::Server) {
 		return createServerSocket(netSet);

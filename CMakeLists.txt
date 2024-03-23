@@ -10,6 +10,7 @@ add_subdirectory(Logger)
 add_subdirectory(SharedTypes)
 add_subdirectory(Socket_Factory)
 add_subdirectory(CircularSPSCQueue)
+add_subdirectory(Timer)
 
 if(MAKE_TESTS)
     add_subdirectory(Tests)

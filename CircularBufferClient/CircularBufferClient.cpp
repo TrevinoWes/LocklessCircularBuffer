@@ -8,6 +8,7 @@
 #include "Logger.h"
 #include "SharedTypes.h"
 #include "SocketFactory.h"
+#include "Timer.h"
 
 std::atomic<bool> run{true};
 std::shared_ptr<Logger> logger_(Logger::getLogger("ClientLogs.log"));
@@ -32,8 +33,11 @@ int main() {
 
     USED_TYPE sent_val = 0, read_val = 0;
     int flags = 0;
-    // !!! need to add time check
-    while(run) {
+    Timer timer;
+    Timer::Time time;
+
+    while(run && sent_val < std::numeric_limits<decltype(sent_val)>::max()) {
+        timer.start();
         if(writeSockFact.sendVal(writeSockfd, sent_val) < 0) {
             run = false;
             logger_->error_log("Write failed, exiting..");
@@ -53,11 +57,13 @@ int main() {
         }
 
         ++sent_val;
+        time += timer.stop();
     }
 
     readSockFact.closeSocket(readSockfd);
     writeSockFact.closeSocket(writeSockfd);
 
+    logger_->info_log(std::to_string(sent_val / time.count()) + "ops/ms");
     logger_->info_log("Client Stoppped exiting...");
     return EXIT_SUCCESS;
 }
