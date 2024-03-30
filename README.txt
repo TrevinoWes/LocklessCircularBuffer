@@ -16,3 +16,8 @@ perf report results:
             socket write: 4.84%
             SPSC pop: 76.07%
 
+Unsurprisingly socket IO takes a significant amount of the CPU cycles
+but suprisingly this is just for client write and server producer read.
+The significant wait on consumer pop from the SPSC may be partially from startup so I will
+add a warmup wait for procceding tests.
+
