@@ -1,0 +1,71 @@
+# ========
+# captured on    : Fri Mar 29 15:41:14 2024
+# header version : 1
+# data offset    : 368
+# data size      : 3153641360
+# feat offset    : 3153641728
+# hostname : localhost.localdomain
+# os release : 4.18.0-394.el8.x86_64
+# perf version : 4.18.0-546.el8.x86_64
+# arch : x86_64
+# nrcpus online : 16
+# nrcpus avail : 16
+# cpudesc : AMD Ryzen 7 2700X Eight-Core Processor
+# cpuid : AuthenticAMD,23,8,2
+# total memory : 32667540 kB
+# cmdline : /usr/bin/perf record --call-graph dwarf -p 924087 -o client.data 
+# event : name = cycles:u, , id = { 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120 }, size = 120, { sample_period, sample_freq } = 4000, sample_type = IP|TID|TIME|ADDR|CALLCHAIN|PERIOD|REGS_USER|STACK_USER|DATA_SRC, read_format = ID, disabled = 1, inherit = 1, exclude_kernel = 1, mmap = 1, comm = 1, freq = 1, task = 1, mmap_data = 1, sample_id_all = 1, exclude_guest = 1, exclude_callchain_user = 1, mmap2 = 1, comm_exec = 1, ksymbol = 1, bpf_event = 1, sample_regs_user = 0xff0fff, sample_stack_user = 8192
+# CPU_TOPOLOGY info available, use -I to display
+# NUMA_TOPOLOGY info available, use -I to display
+# pmu mappings: amd_df = 8, software = 1, power = 12, uprobe = 7, cpu = 4, amd_iommu_0 = 10, breakpoint = 5, amd_l3 = 9, tracepoint = 2, kprobe = 6, msr = 11
+# CACHE info available, use -I to display
+# time of first sample : 1365425.029358
+# time of last sample : 1365532.136045
+# sample duration : 107106.687 ms
+# MEM_TOPOLOGY info available, use -I to display
+# cpu pmu capabilities: max_precise=0
+# missing features: TRACING_DATA BRANCH_STACK GROUP_DESC AUXTRACE STAT CLOCKID DIR_FORMAT COMPRESSED CLOCK_DATA HYBRID_TOPOLOGY HYBRID_CPU_PMU_CAPS 
+# ========
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 371K of event 'cycles:u'
+# Event count (approx.): 4753713786
+#
+# Children      Self  Command          Shared Object        Symbol                                                               
+# ........  ........  ...............  ...................  .....................................................................
+#
+    99.74%     0.02%  CircleBuffClien  CircleBuffClient     [.] main
+            |          
+             --99.72%--main
+                       |          
+                       |--74.99%--Network::SocketFactory::sendVal<unsigned int>
+                       |          |          
+                       |           --74.80%--__libc_send (inlined)
+                        --24.63%--Network::SocketFactory::readVal<unsigned int>
+                                  |          
+                                   --24.62%--__libc_recv
+    99.73%     0.00%  CircleBuffClien  CircleBuffClient     [.] _start
+            |
+            ---_start
+               __libc_start_main
+               main
+               |          
+               |--74.99%--Network::SocketFactory::sendVal<unsigned int>
+               |          |          
+               |           --74.80%--__libc_send (inlined)
+                --24.62%--Network::SocketFactory::readVal<unsigned int>
+                          |          
+                           --24.62%--__libc_recv
+    99.73%     0.00%  CircleBuffClien  libc-2.28.so         [.] __libc_start_main
+            |
+            ---__libc_start_main
+               main
+               |          
+               |--74.99%--Network::SocketFactory::sendVal<unsigned int>
+               |          |          
+               |           --74.80%--__libc_send (inlined)
+                --24.62%--Network::SocketFactory::readVal<unsigned int>
+                          |          
+                           --24.62%--__libc_recv

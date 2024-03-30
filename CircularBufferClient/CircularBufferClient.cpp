@@ -34,7 +34,7 @@ int main() {
     USED_TYPE sent_val = 0, read_val = 0;
     int flags = 0;
     Timer timer;
-    Timer::Time time;
+    Timer::Time time(0);
 
     while(run && sent_val < std::numeric_limits<decltype(sent_val)>::max()) {
         timer.start();
