@@ -1,4 +1,3 @@
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <errno.h>
@@ -8,13 +7,19 @@
 
 namespace Network {
 
-int SocketFactory::createServerSocket(NetworkSettings& netSet) {
-	int sockfd = socket(netSet.server_addr.sin_family, netSet.sockType, 0);
-	if (sockfd < 0) {
-		logger_->error_log("SocketFactory: socket failed (" + std::string(std::strerror(errno)) + ")");
-		return -1;
+SocketFactory::SocketFactory(EntityType type, std::string name, const int& iovcnt): cParse_(type, name), entType_(type),
+																					logger_(Logger::getLogger()), iovcnt_(iovcnt)
+																					{
+	if(iovcnt_ > 0) {
+		iov = new struct iovec[iovcnt_];
 	}
+};
 
+SocketFactory::~SocketFactory() {
+	delete[] iov;
+}
+
+int SocketFactory::createServerSocket(int& sockfd, NetworkSettings& netSet) {
 	auto sin = reinterpret_cast<sockaddr*>(&netSet.server_addr);
 	if(bind(sockfd, sin, sizeof(*sin)) < 0) {
 		logger_->error_log("SocketFactory: bind failed (" + std::string(std::strerror(errno)) + ")");
@@ -39,13 +44,7 @@ int SocketFactory::createServerSocket(NetworkSettings& netSet) {
 	return sockfd;
 };
 
-int SocketFactory::createClientSocket(NetworkSettings& netSet) {
-	int sockfd = socket(netSet.server_addr.sin_family, netSet.sockType, 0);
-	if (sockfd < 0) {
-		logger_->error_log("SocketFactory: socket failed (" + std::string(std::strerror(errno)) + ")");
-		return -1;
-	}
-
+int SocketFactory::createClientSocket(int& sockfd, NetworkSettings& netSet) {
 	auto sin = reinterpret_cast<sockaddr*>(&netSet.server_addr);
 	netSet.server_addr.sin_port = netSet.client_port;
 	if(bind(sockfd, sin, sizeof(*sin)) < 0) {
@@ -65,7 +64,7 @@ int SocketFactory::createClientSocket(NetworkSettings& netSet) {
 	return sockfd;
 };
 
-int SocketFactory::createSocket() {
+int SocketFactory::createSocket(const int& msTimeout) {
 	NetworkSettings netSet;
 
 	if (!cParse_.getConfigs(netSet) && !getConfigFromUser(netSet)){
@@ -79,12 +78,32 @@ int SocketFactory::createSocket() {
 		return -1;
 	}
 
-
-	if (entType_ == EntityType::Server) {
-		return createServerSocket(netSet);
+	int sockfd = socket(netSet.server_addr.sin_family, netSet.sockType, 0);
+	if (sockfd < 0) {
+		logger_->error_log("SocketFactory: socket failed (" + std::string(std::strerror(errno)) + ")");
+		return -1;
 	}
 
-	return createClientSocket(netSet);
+	if(msTimeout > 0) {
+		struct timeval tv;
+		tv.tv_sec = 0;
+		tv.tv_usec = msTimeout;
+		if(setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(decltype(tv))) > 0) {
+			logger_->error_log("SocketFactory: set send timeout failed (" + std::string(std::strerror(errno)) + ")");
+			return -1;
+		}
+
+		if(setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(decltype(tv))) > 0) {
+			logger_->error_log("SocketFactory: set read timeout failed (" + std::string(std::strerror(errno)) + ")");
+			return -1;
+		}
+	}
+
+	if (entType_ == EntityType::Server) {
+		return createServerSocket(sockfd, netSet);
+	}
+
+	return createClientSocket(sockfd, netSet);
 };
 
 int SocketFactory::closeSocket(int& sock) {

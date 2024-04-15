@@ -25,31 +25,31 @@ public:
     };
 
     template <typename t>
-    void debug_log(t log) {
+    void debug_log(const t& log) {
         std::lock_guard<std::mutex> lock(logger_mutex_);
         log_ << "DEBUG: " << log << std::endl;
     };
 
     template <typename t>
-    void error_log(t log) {
+    void error_log(const t& log) {
         std::lock_guard<std::mutex> lock(logger_mutex_);
         log_ << "ERROR: " << log << std::endl;
     };
 
     template <typename t>
-    void fatal_log(t log) {
+    void fatal_log(const t& log) {
         std::lock_guard<std::mutex> lock(logger_mutex_);
         log_ << "FATAL: " << log << std::endl;
     };
 
     template <typename t>
-    void warn_log(t log) {
+    void warn_log(const t& log) {
         std::lock_guard<std::mutex> lock(logger_mutex_);
         log_ << "WARN: " << log << std::endl;
     };
 
     template <typename t>
-    void info_log(t log) {
+    void info_log(const t& log) {
         std::lock_guard<std::mutex> lock(logger_mutex_);
         log_ << "INFO: " << log << std::endl;
     };

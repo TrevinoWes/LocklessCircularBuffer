@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#set -o xtrace
+
+if [ "$EUID" != 0 ]; then
+    sudo "$0" "$@"
+    exit $?
+fi
+
+trap "" SIGINT
+trap "" SIGHUP
+trap "" SIGQUIT
+trap "" SIGABRT
+trap "" SIGALRM
+
+./build/CircularBufferServer/CircleBuffServer &
+SERVER_PID=$!
+#Server needs to register port before client can connect
+sleep 1
+./build/CircularBufferClient/CircleBuffClient &
+CLIENT_PID=$!
+
+#wait for processes to warmup
+sleep 5
+timeout --signal=INT 45 perf record --call-graph dwarf -p $SERVER_PID -o server.data
+perf report -f -i server.data --stdio -g --kallsyms=/boot/System.map-4.18.0-394.el8.x86_64 > server_report.txt
+
+timeout --signal=INT 45 perf record --call-graph dwarf -p $CLIENT_PID -o client.data
+perf report -f -i client.data --stdio -g --kallsyms=/boot/System.map-4.18.0-394.el8.x86_64 > client_report.txt
+
+kill -s 2 $CLIENT_PID
+kill -s 2 $SERVER_PID
+rm server.data
+rm client.data

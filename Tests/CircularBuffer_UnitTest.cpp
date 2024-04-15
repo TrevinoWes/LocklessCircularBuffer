@@ -58,8 +58,8 @@ namespace {
 	class ExtendedCircularSPSCQueue: public CircularSPSCQueue<t> {
 	public:
 		ExtendedCircularSPSCQueue(size_t size): CircularSPSCQueue<t>(size) {};
-		void setPushIndex(uint32_t pshI) {CircularSPSCQueue<t>::pshIdx = pshI;}	
-		void setPopIndex(uint32_t popI) {CircularSPSCQueue<t>::popIdx = popI;}
+		void setPushIndex(uint32_t pshI) {CircularSPSCQueue<t>::pshIdx_ = pshI;}	
+		void setPopIndex(uint32_t popI) {CircularSPSCQueue<t>::popIdx_ = popI;}
 	};
 
 

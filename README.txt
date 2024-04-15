@@ -21,3 +21,9 @@ but suprisingly this is just for client write and server producer read.
 The significant wait on consumer pop from the SPSC may be partially from startup so I will
 add a warmup wait for procceding tests.
 
+Using scatter-gather APIs with a timeout set on the socket skyrocketed the throughput to
+3458.91 ops/ms
+
+
+using memory_ordering and cache aligning the SPSC index values we were able to jump upto
+3636.91 ops/ms
