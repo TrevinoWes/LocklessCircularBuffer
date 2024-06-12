@@ -29,7 +29,7 @@ namespace {
 	}
 
 	TEST(CBTest, PushFull) {
-		int size = 5;
+		int size = 8;
 		CircularSPSCQueue<int> buffer(size);
 		for(int i = 0; i < size; ++i) {
 			EXPECT_TRUE(buffer.push(i));
@@ -44,7 +44,7 @@ namespace {
 	}
 
 	TEST(CBTest, PopEmpty) {
-		int size = 5;
+		int size = 4;
 		CircularSPSCQueue<int> buffer(size);
 		int retVal;
 		EXPECT_FALSE(buffer.pop(retVal));
@@ -58,10 +58,15 @@ namespace {
 	class ExtendedCircularSPSCQueue: public CircularSPSCQueue<t> {
 	public:
 		ExtendedCircularSPSCQueue(size_t size): CircularSPSCQueue<t>(size) {};
-		void setPushIndex(uint32_t pshI) {CircularSPSCQueue<t>::pshIdx_ = pshI;}	
-		void setPopIndex(uint32_t popI) {CircularSPSCQueue<t>::popIdx_ = popI;}
+		void setPushIndex(uint32_t pshI) {
+			CircularSPSCQueue<t>::pshIdx_ = pshI;
+			CircularSPSCQueue<t>::cachedPshIdx_ = pshI;
+		}	
+		void setPopIndex(uint32_t popI) {
+			CircularSPSCQueue<t>::popIdx_ = popI;
+			CircularSPSCQueue<t>::cachedPopIdx_ = popI;
+		}
 	};
-
 
 	TEST(CBTest, Wrapping) {
 		ExtendedCircularSPSCQueue<uint32_t> buffer(2);
@@ -82,7 +87,7 @@ namespace {
 	}
 
 	TEST(CBTest, MulitThreaded) {
-		CircularSPSCQueue<uint32_t> buffer(50);
+		CircularSPSCQueue<uint32_t> buffer(64);
 		uint32_t start = 5, test_count = TEST_CASE_COUNT, val;
 		
 		std::thread pushThread([&buffer, &test_count, &start](){

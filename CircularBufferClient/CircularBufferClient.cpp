@@ -12,7 +12,7 @@
 
 std::atomic<bool> run{true};
 std::shared_ptr<Logger> logger_(Logger::getLogger("ClientLogs.log"));
-const int BUFFER_SIZE = 30;
+const int BUFFER_SIZE = 500;
 
 void sigHandler(int sig) {
     logger_->info_log("SIGINT received, stopping threads...");

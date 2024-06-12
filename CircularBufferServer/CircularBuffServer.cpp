@@ -15,7 +15,7 @@
 std::atomic<bool> run{true};
 
 std::shared_ptr<Logger> logger_(Logger::getLogger("ServerLogs.log"));
-const int BUFFER_SIZE = 30;
+const int BUFFER_SIZE = 500;
 
 void sigHandler(int signal) {
 	logger_->info_log("SIGINT received, stopping... ");
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 
 	std::signal(SIGINT, sigHandler);
 
-	CircularSPSCQueue<USED_TYPE> lcBuffer(50);
+	CircularSPSCQueue<USED_TYPE> lcBuffer(2048);
 
 	//Pusher Thread
 	/*

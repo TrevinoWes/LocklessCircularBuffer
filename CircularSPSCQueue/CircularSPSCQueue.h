@@ -19,7 +19,7 @@ private:
 	size_t capacity;
 	std::vector<T> buffer;
 
-	bool full(const std::atomic<uint64_t>& pshIdx, const std::atomic<uint64_t>& popIdx) {
+	bool full(const uint32_t& pshIdx, const uint32_t& popIdx) {
 		uint32_t size = 0;
 		if (popIdx > pshIdx) {
 			size = UINT32_MAX - popIdx + pshIdx + 1;
@@ -29,14 +29,16 @@ private:
 		return size == capacity;
 	}
 
-	bool empty(const std::atomic<uint64_t>& pshIdx, const std::atomic<uint64_t>& popIdx) {
-		return (pshIdx == popIdx);
+	bool empty(const uint32_t& pshIdx, const uint32_t& popIdx) {
+		return pshIdx == popIdx;
 	}
-
+	
 protected:
 	// Protected to allow instant overflow testing
-    alignas(hardware_destructive_interference_size) std::atomic<uint32_t> pshIdx_;
-	alignas(hardware_destructive_interference_size) std::atomic<uint32_t> popIdx_;
+    alignas(hardware_destructive_interference_size) std::atomic<uint32_t> pshIdx_{0};
+	alignas(hardware_destructive_interference_size) std::atomic<uint32_t> popIdx_{0};
+    alignas(hardware_destructive_interference_size) uint32_t cachedPshIdx_{0};
+	alignas(hardware_destructive_interference_size) uint32_t cachedPopIdx_{0};
 
 	// Pad to stop shared cache lines for popIdx
 	char padding[hardware_destructive_interference_size - sizeof(decltype(popIdx_))];
@@ -46,27 +48,34 @@ protected:
 public:
 
 	CircularSPSCQueue(size_t size) : capacity(size), buffer(capacity, T()),
-									 pshIdx_(0), popIdx_(0) {};
+									 pshIdx_(0), popIdx_(0) {
+		if(capacity == 0 || (capacity & (capacity - 1)) != 0) {
+			throw std::invalid_argument("capacity must be a power of 2 and greater than 0");
+		}
+	};
 
 	bool push(const T& val) {
 		auto pshIdx = pshIdx_.load(std::memory_order_relaxed);
-		auto popIdx = popIdx_.load(std::memory_order_acquire);
-		if (full(pshIdx, popIdx)) {
-			return false;
+		if (full(pshIdx, cachedPopIdx_)) {
+			cachedPopIdx_ = popIdx_.load(std::memory_order_acquire);
+			if (full(pshIdx, cachedPopIdx_)) {
+				return false;
+			}
 		}
-		buffer[pshIdx % capacity] = val;
+		buffer[pshIdx & (capacity - 1)] = std::move(val);
 		pshIdx_.store(pshIdx + 1, std::memory_order_release);
 		return true;
 	};
 
 	bool pop(T& val) {
 		auto popIdx = popIdx_.load(std::memory_order_relaxed);
-		auto pshIdx = pshIdx_.load(std::memory_order_acquire);
-		if (empty(pshIdx, popIdx)) {
-			return false;
+		if(empty(cachedPshIdx_, popIdx)) {
+			cachedPshIdx_ = pshIdx_.load(std::memory_order_acquire);
+			if (empty(cachedPshIdx_, popIdx)) {
+				return false;
+			}
 		}
-
-		val = buffer[popIdx % capacity];
+		val = std::move(buffer[popIdx & (capacity - 1)]);
 		popIdx_.store(popIdx + 1, std::memory_order_release);
 		return true;
 	};
